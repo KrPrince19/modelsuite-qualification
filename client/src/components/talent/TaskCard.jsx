@@ -1,4 +1,5 @@
-﻿import { claimTask } from '../../api/talent';
+import { claimTask } from '../../api/talent';
+import { toast } from 'react-hot-toast';
 
 const STATUS_CLASS = {
   Open:      'status-badge-Open',
@@ -15,9 +16,24 @@ const TaskCard = ({ task, showClaimButton = false, onClaimed }) => {
       await claimTask(task._id);
       if (onClaimed) onClaimed();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to claim task');
+      toast.error(err.response?.data?.message || 'Failed to claim task');
     }
   };
+
+  let badge = null;
+  if (task.dueDate && task.status !== 'Submitted' && task.status !== 'Approved' && task.status !== 'Rejected') {
+    const now = new Date();
+    const due = new Date(task.dueDate);
+    if (!isNaN(due.getTime())) {
+      const timeDiff = due.getTime() - now.getTime();
+      const hoursDiff = timeDiff / (1000 * 3600);
+      if (hoursDiff < 0) {
+        badge = <span className="shrink-0 inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold tracking-[0.3px] bg-red-100 text-red-800">Overdue</span>;
+      } else if (hoursDiff <= 24) {
+        badge = <span className="shrink-0 inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold tracking-[0.3px] bg-yellow-100 text-yellow-800">Due Soon</span>;
+      }
+    }
+  }
 
   return (
     <div className="bg-bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-border-light hover:-translate-y-0.5 transition-all cursor-default">
@@ -25,11 +41,14 @@ const TaskCard = ({ task, showClaimButton = false, onClaimed }) => {
       {/* Header: title + status */}
       <div className="flex items-start justify-between gap-2.5">
         <p className="text-[15px] font-semibold text-text-primary leading-snug">{task.title || 'Untitled Task'}</p>
-        {task.status && (
-          <span className={`shrink-0 inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold tracking-[0.3px] ${STATUS_CLASS[task.status] || ''}`}>
-            {task.status}
-          </span>
-        )}
+        <div className="flex gap-2 items-center">
+          {badge}
+          {task.status && (
+            <span className={`shrink-0 inline-block px-2.5 py-[3px] rounded-full text-[11px] font-semibold tracking-[0.3px] ${STATUS_CLASS[task.status] || ''}`}>
+              {task.status}
+            </span>
+          )}
+        </div>
       </div>
 
       
