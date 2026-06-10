@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 
@@ -15,17 +16,22 @@ const RegisterPage = () => {
   const [email, setEmail]     = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole]       = useState('Talent');
+  const [isLoading, setIsLoading] = useState(false);
   const { login }  = useAuth();
   const navigate   = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const { data } = await API.post('/auth/register', { name, email, password, role });
       login(data);
+      toast.success('Registration successful');
       data.role === 'Admin' ? navigate('/admin/dashboard') : navigate('/talent/dashboard');
     } catch (err) {
-      alert(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -69,9 +75,9 @@ const RegisterPage = () => {
             </select>
           </div>
 
-          <button type="submit"
-            className="mt-2 w-full py-3.5 rounded-[10px] text-[15px] font-semibold text-white cursor-pointer btn-gradient border-none hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200">
-            Setup Profile
+          <button type="submit" disabled={isLoading}
+            className="mt-2 w-full py-3.5 rounded-[10px] text-[15px] font-semibold text-white cursor-pointer btn-gradient border-none hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            {isLoading ? 'Loading...' : 'Setup Profile'}
           </button>
         </form>
 
